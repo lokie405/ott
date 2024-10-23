@@ -150,6 +150,18 @@ function go(arr, oSet = {}) {
    function makeHeader(kind) {
     const f = o.frameStyle
     const headers = o.headers
+    headers.forEach((el, index) => {
+      const rowCount = Math.ceil(headers[index].length / o.limit[index])
+      if(rowCount > 1 ) {
+        const name = headers[index]
+        const length = o.limit[index]
+        headers[index] = []
+        for(let i = 0; i < name.length; i += length) {
+          headers[index].push(name.slice(i, length))
+        }
+        
+      }
+    })
     const maxRow = Math.max(...oDef.headers.map((el, index) => Math.max(el.length / oDef.limit[index]))) + 2
     console.log(`maxRow: ${maxRow}`)
     let s = ""
@@ -170,9 +182,13 @@ function go(arr, oSet = {}) {
           // const header = o.headers[inde
           const limit = o.limit[index]
           const rowCount = Math.ceil(headers[index].length / limit)
+
           if(rowCount === 1) {
             s = s + headers[index] + " ".repeat(limit - headers[index].length) + f[1]
             headers[index] = " "
+          } else {
+
+            
           }
           // console.log( `rrow: ${row}`)
           
