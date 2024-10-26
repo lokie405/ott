@@ -33,7 +33,7 @@ go(humans, {
   // headers: ["name", "_$"],
   // limit: [{ id: 250 }, { "...": 300 }, { country: 100 }],
   // limit: [5, , 7, 5],
-  // limit: []
+  limit: []
   // limit: [{ f: 4 }, {"...": 4}],
   // headers: ["pet", "_$"],
   // headers: ["id", "profession", "skills", "_$"]
