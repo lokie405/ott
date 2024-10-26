@@ -32,7 +32,8 @@ go(humans, {
   // limit: [{id: 6}, {_$: 9}, {pet: 5}],
   // headers: ["name", "_$"],
   // limit: [{ id: 250 }, { "...": 300 }, { country: 100 }],
-  limit: [5, , 5, 5],
+  // limit: [5, , 7, 5],
+  // limit: []
   // limit: [{ f: 4 }, {"...": 4}],
   // headers: ["pet", "_$"],
   // headers: ["id", "profession", "skills", "_$"]

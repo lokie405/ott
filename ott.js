@@ -22,7 +22,7 @@ const _schema = {
     limit: {
       type: "array",
       items: {
-        anyOf: [{ type: "integer" },{type: "string"}, { type: "object", patternProperties: { ".*": { type: "integer" } } }],
+        anyOf: [{ type: "integer", minimum: 1 },{type: "string"}, { type: "object", patternProperties: { ".*": { type: "integer" } } }],
       },
     },
   },
@@ -88,8 +88,13 @@ function go(arr, oSet = {}) {
     });
 
     //_ limit
-    const limitDef = new Array(oDef.headers.length);
+    // console.log(`limit = ${oDef.limit}`)
+    //: Default limits
+    const limitDef = new Array(oDef.headers.length);  //: Default limit extends maximum length
+    
     limitDef.fill(0);
+    const leftOverLimit = limitDef.map((elem, ind) => ind)  //: To set left over "..."
+    // console.log(`leftOverLimit = ${leftOverLimit}`)
     arr.forEach((obj) => {
       oDef.headers.forEach((e, index) => {
         let max;
@@ -100,38 +105,34 @@ function go(arr, oSet = {}) {
         } else {
           max = obj[e].length;
         }
-        limitDef[index] = Math.max(max, limitDef[index]);
+        limitDef[index] = Math.max(max, limitDef[index], e.length);
       });
     });
-    const preLimit = oDef.limit
-    oDef.limit = [];
-    if (typeof preLimit[0] === "number") {
-      oDef.headers.forEach((el, index) => {
-        // oDef.limit.push(preLimit === -1 ? limitDef : preLimit[index]);
-        if(typeof preLimit[index] === "number") {
-          oDef.limit.push(preLimit[index])
+    let limitSet = oDef.limit
+    oDef.limit = limitDef
+    limitSet.forEach((el, index) => {
+      if (typeof el === "number") {
+        oDef.limit[index] = el
+        leftOverLimit[index] = -1
+      } else if (typeof el === "string") {
+        oDef.limit[index] = limitDef[index]
+        leftOverLimit[index] = -1
+      } else if (Object.prototype.toString.call(el) === `[object Object]`) {
+        const ind = oDef.headers.indexOf(Object.entries(el)[0][0])
+        const lim = Object.entries(el)[0][1]
+        if (Object.entries(el)[0][0] === "..."){
+          console.log(`ind`)
+          leftOverLimit.map((e, i) => {
+            if (e > -1) oDef.limit[i] = lim
+          })
         } else {
-          oDef.limit.push(limitDef[index])
+          oDef.limit[ind] = lim
+          leftOverLimit[ind] = -1
         }
-      });
-    } else if (Object.prototype.toString.call(preLimit[0]) === `[object Object]`) {
-      if (preLimit.some((el) => "..." in el)) {
-        oDef.limit = new Array(oDef.headers.length);
-        oDef.limit.fill(preLimit.find((e) => "..." in e)?.["..."])
-        // console.log(`... : ${preLimit.find((e) => "..." in e)?.["..."]}`);
       }
-      preLimit.forEach((el) => {
-        const key = Object.keys(el)[0]
-        if (key === "...") {
-          // console.log(`1`);
-        } else if (!oDef.headers.includes(key)) {
-          throw new Error(`In limit passed not existing value`)
-        } else {
-          const index = oDef.headers.indexOf(key)
-          oDef.limit[index] = el[key]
-        }
-      });
-    }
+      console.log(`leftOverLimit = ${leftOverLimit}`)
+    })
+
     //_ row (private)
     oDef.maxRow = []
     arr.forEach(el => {
@@ -152,18 +153,19 @@ function go(arr, oSet = {}) {
     const headers = o.headers
     headers.forEach((el, index) => {
       const rowCount = Math.ceil(headers[index].length / o.limit[index])
-      if(rowCount > 1 ) {
-        const name = headers[index]
-        const length = o.limit[index]
+      // console.log(`index: ${rowCount}`)
+      const name = headers[index]
+      const length = o.limit[index]
         headers[index] = []
         for(let i = 0; i < name.length; i += length) {
-          headers[index].push(name.slice(i, length))
+          headers[index].push(name.substring(i, i + length))
+          //TODO: in here set align algorithm
+          // console.log(`i = ${i} ;length = ${headers[index].length} h = ${headers[index][headers[index].length - 1]}`)
         }
-        
-      }
     })
-    const maxRow = Math.max(...oDef.headers.map((el, index) => Math.max(el.length / oDef.limit[index]))) + 2
-    console.log(`maxRow: ${maxRow}`)
+    // console.log(`mmm = ${Math.max(...headers.map(el => el.length))}`)
+    const maxRow = Math.max(...headers.map(el => el.length)) + 2
+    // console.log(`maxRow: ${maxRow}`)
     let s = ""
     for (let i = 0; i < maxRow; i++) {
       if (i === 0) s = s + f[2]  //: First row start
@@ -171,7 +173,6 @@ function go(arr, oSet = {}) {
       else s = s + f[1]
 
       o.limit.forEach((limit, index) => {
-
         if (i ===  0 || i === maxRow - 1) {  //: First and last row center
           s = s + f[0].repeat(limit)
           if (index < o.limit.length - 1) {
@@ -179,26 +180,22 @@ function go(arr, oSet = {}) {
            else if (i === maxRow - 1) s = s + f[6]
           }
         } else {
-          // const header = o.headers[inde
+          //: Text
           const limit = o.limit[index]
-          const rowCount = Math.ceil(headers[index].length / limit)
-
-          if(rowCount === 1) {
-            s = s + headers[index] + " ".repeat(limit - headers[index].length) + f[1]
-            headers[index] = " "
+          const rowCount = headers[index].length
+          const space = limit - headers[index][0].length
+          s = s + headers[index][0] + " ".repeat(space) + f[1]  //_ <= text =
+          if (rowCount === 1) {
+            headers[index][0] = " "
           } else {
-
-            
+            headers[index].shift()
           }
-          // console.log( `rrow: ${row}`)
-          
         }
       })
       if (i === 0) s = s + f[4]  //: First row finish
       else if (i === maxRow - 1) s = s + f[7]
       s = s + `\n`
     }
-    // console.log(`maxRow: ${maxRow}`)
     return s
    }
 
