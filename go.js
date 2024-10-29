@@ -21,19 +21,22 @@ const humans = [
     name: "Charlie",
     profession: "Teacher",
     skills: ["Communication", "Patience", "Organization"],
-
+    pet: "hamster",
     country: "UK",
+    "years old": 2525252525,
   },
 ];
 
 go(humans, {
-  margin: 3,
+  headersAlign: "left",
+  headersGravity: "middle",
+
   // margin: [{profession: 4}, {pet: 6}],
   // limit: [{id: 6}, {_$: 9}, {pet: 5}],
   // headers: ["name", "_$"],
+  limit: [4, 3, 3],
   // limit: [{ id: 250 }, { "...": 300 }, { country: 100 }],
   // limit: [5, , 7, 5],
-  limit: []
   // limit: [{ f: 4 }, {"...": 4}],
   // headers: ["pet", "_$"],
   // headers: ["id", "profession", "skills", "_$"]
