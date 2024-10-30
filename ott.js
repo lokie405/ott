@@ -38,7 +38,7 @@ function go(arr, oSet = {}) {
     frameStyle: "double", //: "double" | "single" (<string>)
     headersAlign: "left", //: "center" | "left" | "right"
     headersGravity: "top",
-    limit: ["..."], //: "default" | <number> | {"header": <number>}
+    limit: ["..."], //: "default" | <number> | {"header": <number>} | [3, , 3]
     alignedHor: "center", //: "center" | "left" | "right"
     alignedVer: "middle", //: "middle" | "top" | "bottom"
     unsetTemplate: "-", // TODO: if length of template more then row limit then cut template
@@ -50,12 +50,8 @@ function go(arr, oSet = {}) {
       oDef[key] = oSet[key];
     });
 
-    //_ Set "-1" instead "undefined" in array like [v1,v2, , v4] -> because ajv does not have undefined concept
-    //_ in first time replace set limit
-    // console.log(`oDef.limit = ${JSON.stringify(oDef.limit, null, 1)}`);
     const validLimit = [];
     for (let i = 0; i < oDef.limit.length; i++) {
-      // console.log(`${oDef.limit[i] === "null"} p: ${i}`);
       if (oDef.limit[i] === undefined) {
         validLimit.push("void");
       } else {
@@ -69,7 +65,6 @@ function go(arr, oSet = {}) {
     const validate = ajv.compile(_schema);
     const valid = validate(oDef);
     if (!valid) {
-      // console.log(`ERROR: ${validate.errors.message}`);
       throw new Error(`OTT___ValidError: ${JSON.stringify(validate.errors, null, 1)}`);
     }
     // :: Prepare object
@@ -89,13 +84,11 @@ function go(arr, oSet = {}) {
     });
 
     //_ limit
-    // console.log(`limit = ${oDef.limit}`)
     //: Default limits
     const limitDef = new Array(oDef.headers.length); //: Default limit extends maximum length
 
     limitDef.fill(0);
     const leftOverLimit = limitDef.map((elem, ind) => ind); //: To set left over "..."
-    // console.log(`leftOverLimit = ${leftOverLimit}`)
     arr.forEach((obj) => {
       oDef.headers.forEach((e, index) => {
         let max;
@@ -109,6 +102,7 @@ function go(arr, oSet = {}) {
         limitDef[index] = Math.max(max, limitDef[index], e.length);
       });
     });
+    //: Setting limits
     let limitSet = oDef.limit;
     oDef.limit = limitDef;
     limitSet.forEach((el, index) => {
@@ -146,9 +140,10 @@ function go(arr, oSet = {}) {
   // ['═  0', '║  1', '╔  2', '╦  3', '╗  4', '╠  5',
   //  '╬  6', '╣  7', '╚  8', '╩  9', '╝ 10', '╧ 11',
   //  '╤ 12', '╢ 13', '╟ 14', '╫ 15', '╪ 16', '─ 17', '│ 18']
+  
   //::: FRAME
-  function makeHeader() {
-    console.log(`headersGravity : ${o.headersGravity}`)
+  function makeHeader(type) {
+
     const f = o.frameStyle;
     const headers = o.headers;
     headers.forEach((name, index) => {  //: break longest as limit string at short pieces
@@ -178,10 +173,7 @@ function go(arr, oSet = {}) {
           headers[index].push(" ".repeat(o.limit[index]))
           spacePost--
         }
-        
       } else if (o.headersGravity === "bottom") {
-        // console.log(`diff: ${maxRow}; el: ${el}`)
-
         for(let i = diff; i > 0; i--) {
           headers[index].unshift(" ".repeat(o.limit[index]))
         }
