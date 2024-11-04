@@ -140,94 +140,150 @@ function go(arr, oSet = {}) {
   // ['═  0', '║  1', '╔  2', '╦  3', '╗  4', '╠  5',
   //  '╬  6', '╣  7', '╚  8', '╩  9', '╝ 10', '╧ 11',
   //  '╤ 12', '╢ 13', '╟ 14', '╫ 15', '╪ 16', '─ 17', '│ 18']
-  
+
+  function breakString(element, lim) {
+    let row = [];
+    if (typeof element === "string") {
+      for (let i = 0; i < element.length; i += lim) {
+        row.push(element.substring(i, i + lim));
+      }
+    } else if (Array.isArray(element)) {
+      element.forEach((el, ind) => {
+        for (let i = 0; i < el.length; i += lim) {
+          row.push(el.substring(i, i + lim));
+        }
+      });
+    } else if (element === undefined) {
+      row.push(o.unsetTemplate);
+    }
+    return row;
+  }
+
   //::: FRAME
   function makeHeader(type) {
-
-    const f = o.frameStyle;
-    const headers = o.headers;
-    headers.forEach((name, index) => {  //: break longest as limit string at short pieces
-      const rowCount = Math.ceil(headers[index].length / o.limit[index]);
-      const length = o.limit[index];
-      headers[index] = [];
-      for (let i = 0; i < name.length; i += length) {
-        headers[index].push(name.substring(i, i + length))
-      }
-    });
-    const maxRow = Math.max(...headers.map((el) => el.length)) + 2;
-
-    headers.forEach((el, index) => {
-      const diff = maxRow - 2 - el.length
-
-      if(o.headersGravity === "top") {
-        // console.log(`maxRow: ${maxRow}`)
-      } else if (o.headersGravity === "middle") {
-        spacePre = diff % 2 === 0 ? diff / 2 : Math.ceil(diff / 2) - 1
-        spacePost = diff % 2 === 0 ? diff / 2 : Math.ceil(diff / 2)
-        // headers[index].unshift()
-        while (spacePre > 0) {
-          headers[index].unshift(" ".repeat(o.limit[index]))
-          spacePre--
-        }
-        while (spacePost > 0) {
-          headers[index].push(" ".repeat(o.limit[index]))
-          spacePost--
-        }
-      } else if (o.headersGravity === "bottom") {
-        for(let i = diff; i > 0; i--) {
-          headers[index].unshift(" ".repeat(o.limit[index]))
-        }
-      }
-    })
-
     let s = "";
-    for (let i = 0; i < maxRow; i++) {
-      if (i === 0) s = s + f[2]; //: First row start
-      else if (i === maxRow - 1) s = s + f[5]; //: Last row start
-      else s = s + f[1];
+    const f = o.frameStyle;
+    let row;
 
-      o.limit.forEach((limit, index) => {
-        if (i === 0 || i === maxRow - 1) {
-          //: First and last row center
-          s = s + f[0].repeat(limit);
-          if (index < o.limit.length - 1) {
-            if (i === 0) s = s + f[3];
-            else if (i === maxRow - 1) s = s + f[6];
-          }
-        } else {
-          //: Text
-          const limit = o.limit[index];
-          const rowCount = headers[index].length;
-          let spacePre, spacePost;
-          if (o.headersAlign === "left") {
-            spacePre = "";
-            spacePost = limit - headers[index][0].length;
-          } else if (o.headersAlign === "center") {
-            const left = limit - headers[index][0].length
-            spacePre = left % 2 === 0 ? left / 2 : Math.ceil(left / 2) - 1
-            spacePost = left % 2 === 0 ? left / 2 : Math.ceil(left / 2)
-            // console.log(`left: ${left}; spacePre: ${spacePre}; spacePost: ${spacePost} `)
 
-          } else if (o.headersAlign === "right") {
-            spacePre = limit - headers[index][0].length;
-            spacePost = "";
+
+    //: ╔ ║ ╠
+    let leftTop = f[2],
+      leftMiddle = f[1],
+      leftBottom = f[5];
+    //: ═ ╦ ╬
+    let bridgeTop = f[0],
+      bridgeBottom = f[0],
+      topCross = f[3],
+      middleCross = f[6];
+    //: ╗ ╣ ╝
+    let rightTop = f[4],
+      rightMiddle = f[7],
+      frameRightBottom = f[10];
+
+    for (let k = -1; k < arr.length; k++) {
+      if (k > -1) {
+        bridgeTop = "";
+        topCross = "";
+        if (k === arr.length - 1) {
+          middleCross = f[9];
+        }
+
+        rightTop = "";
+
+        leftTop = "";
+        leftBottom = k === arr.length - 1 ? f[8] : f[14];
+      }
+      if (k === arr.length - 1) {
+        rightMiddle = frameRightBottom;
+      }
+
+      if (k === -1) row = o.headers;
+      else row = Object.values(arr[k]);
+
+      row.forEach((name, index) => {
+        //: break longest as limit string at short pieces
+        const length = o.limit[index];
+        row[index] = [];
+        row[index] = breakString(name, length);
+      });
+      const maxRow = Math.max(...row.map((el) => el.length)) + 2;
+
+      row.forEach((el, index) => {
+        const diff = maxRow - 2 - el.length;
+
+        if (o.headersGravity === "top") {
+        } else if (o.headersGravity === "middle") {
+          spacePre = diff % 2 === 0 ? diff / 2 : Math.ceil(diff / 2) - 1;
+          spacePost = diff % 2 === 0 ? diff / 2 : Math.ceil(diff / 2);
+          while (spacePre > 0) {
+            el.unshift(" ".repeat(o.limit[index]));
+            spacePre--;
           }
-          s = s + space(spacePre) + headers[index][0] + space(spacePost) + f[1]; //_ <=text=
-          if (rowCount === 1) {
-            headers[index][0] = " ";
-          } else {
-            headers[index].shift();
+          while (spacePost > 0) {
+            el.push(" ".repeat(o.limit[index]));
+            spacePost--;
+          }
+        } else if (o.headersGravity === "bottom") {
+          for (let i = diff; i > 0; i--) {
+            el.unshift(" ".repeat(o.limit[index]));
           }
         }
       });
-      if (i === 0) s = s + f[4]; //: First row finish
-      else if (i === maxRow - 1) s = s + f[7];
-      s = s + `\n`;
+
+      for (let i = 0; i < maxRow; i++) {
+        if (i === 0) s = s + leftTop; //: First row start
+        else if (i === maxRow - 1) s = s + leftBottom; //: Last row start
+        else s = s + leftMiddle;
+
+        o.limit.forEach((limit, index) => {
+          //: First row
+          if (i === 0) {
+            s = s + bridgeTop.repeat(limit);
+            if (index < o.limit.length - 1) s = s + topCross;
+            //: Last row
+          } else if (i === maxRow - 1) {
+            s = s + bridgeBottom.repeat(limit);
+            if (index < o.limit.length - 1) s = s + middleCross;
+            //: Text
+          } else {
+            const limit = o.limit[index];
+            // TODO: Make 5 index not undefined
+            row[index] = row[index] === undefined ? o.unsetTemplate : row[index];
+            const rowCount = row[index].length;
+            let spacePre, spacePost;
+            if (o.headersAlign === "left") {
+              spacePre = "";
+              spacePost = limit - row[index][0].length;
+            } else if (o.headersAlign === "center") {
+              const left = limit - row[index][0].length;
+              spacePre = left % 2 === 0 ? left / 2 : Math.ceil(left / 2) - 1;
+              spacePost = left % 2 === 0 ? left / 2 : Math.ceil(left / 2);
+            } else if (o.headersAlign === "right") {
+              spacePre = limit - row[index][0].length;
+              spacePost = "";
+            }
+            s = s + space(spacePre) + row[index][0] + space(spacePost) + f[1]; //_ <=text=
+            if (rowCount === 1) {
+              row[index][0] = " ";
+            } else {
+              row[index].shift();
+            }
+          }
+        });
+
+        if (i === 0) s = s + rightTop; //: First row finish
+        else if (i === maxRow - 1) s = s + rightMiddle;
+        let end = `\n`;
+        if (s.endsWith(`\n`)) end = "";
+        else end = `\n`;
+        s = s + end;
+      }
+      // console.log(`s = ${s}`);
     }
+
     return s;
   }
-
-
 
   function space(sp) {
     if (sp > 0) return " ".repeat(sp);

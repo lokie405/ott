@@ -28,13 +28,13 @@ const humans = [
 ];
 
 go(humans, {
-  headersAlign: "left",
+  headersAlign: "center",
   headersGravity: "middle",
 
   // margin: [{profession: 4}, {pet: 6}],
   // limit: [{id: 6}, {_$: 9}, {pet: 5}],
   // headers: ["name", "_$"],
-  limit: [4, 3, 3],
+  // limit: [4, 3, 3],
   // limit: [{ id: 250 }, { "...": 300 }, { country: 100 }],
   // limit: [5, , 7, 5],
   // limit: [{ f: 4 }, {"...": 4}],
