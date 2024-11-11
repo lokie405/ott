@@ -2,11 +2,77 @@ const Ajv = require("ajv");
 const beautify = require("json-beautify");
 
 const frameStyles = {
+  real: ["║", "═", "│", "─", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╟", "╫", "╢"],
+
   // double : ['╔', /*201*/ '╗', /*187*/ '╚', /*200*/ '╝', /*188*/ '═', /*205*/ '║', /*186*/ '╦', /*203*/ '╩', /*202*/ '╣', /*185*/ '╠', /*204*/ '╬', /*206*/ '╧', /*207*/ '╤', /*209*/ '╢', /*182*/ '╟', /*198*/ '╫', /*215*/ '╪', /*215*/ '─', /*196*/ '│', /*179*/],
   double: ["═", "║", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╤", "╢", "╟", "╫", "╪", "─", "│"],
 
   single: ["┌", /*218*/ "┐", /*191*/ "└", /*192*/ "┘", /*217*/ "─", /*196*/ "│", /*179*/ "┬", /*194*/ "┴", /*193*/ "┤", /*180*/ "├", /*195*/ "┼" /*197*/],
 };
+
+// ╔════╦═════╦════════╦════╗
+// ║    ║     ║        ║    ║
+// ╠════╬═════╬════════╬════╣
+// ║    │     │        │    ║
+// ╟────┼─────┼────────┼────╢
+
+// ╔════╦═════╦════════╦════╗
+// ║    ║     ║        ║    ║
+// ╠════╩═════╩════════╩════╣
+// ║    │     │        │    ║
+// ╟────┼─────┼────────┼────╢
+
+// ╔════╦═════╦════════╦════╗
+// ║    ║     ║        ║    ║
+// ╠════╪═════╪════════╪════╣
+// ║    │     │        │    ║
+// ╟────┼─────┼────────┼────╢
+
+// ╔════╦═════╦════════╦════╗
+// ║    ║     ║        ║    ║
+// ╠════╤═════╤════════╤════╣
+// ║    │     │        │    ║
+// ╟────┼─────┼────────┼────╢
+
+// ╔════════════════════════╗
+// ║    ║     ║        ║    ║
+// ╠════════════════════════╣
+// ║    │     │        │    ║
+// ╟────────────────────────╢
+
+// ┳ (U+2533) – Box Drawings Down Single and Horizontal Double
+// ┱ (U+2531) – Box Drawings Down Double and Left Single
+// ┼ (U+253C) – Box Drawings Light Vertical and Horizontal
+// ╀ (U+2560) – Box Drawings Double Vertical and Single Horizontal
+// ╂ (U+2562) – Box Drawings Double Vertical
+// ╄ (U+2564) – Box Drawings Down Double and Horizontal
+// ╆ (U+2566) – Box Drawings Double Vertical and Horizontal
+// ╇ (U+2567) – Box Drawings Up Single and Double Horizontal
+// ╋ (U+256B) – Box Drawings Double Vertical and Horizontal
+// ╪ (U+256A) – Box Drawings Vertical Double and Horizontal Single
+// ┲ (U+2532) – Box Drawings Down Double and Horizontal Single
+// ╨ (U+2568) – Box Drawings Vertical Double and Horizontal
+// real: [ "║", "═", "│", "─", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╟", "╫", "╢",],
+// const frame = {
+//   frameVertical : "║",
+//   frameHorizontal : "═",
+//   frameLeftTop : "╔",
+//   frameLeftMiddle : "╠",
+//   frameLeftBottom : "╚",
+//   frameCenterTop : "╦",
+//   frameCenterMiddle : "╬",
+//   frameCenterBottom : "╩",
+//   frameRightTop : "╗",
+//   frameRightMiddle : "╣",
+//   frameRightBottom : "╝",
+//   frameLineLeft : "╟",
+//   frameLineCenter : "┼",
+//   frameLineRight : "╢",
+//   frameLineTop : "╤",
+//   frameLinBottom : "╧",
+//   lineVertical : "│",
+//   lineHorizontal : "─",
+// }
 
 const _schema = {
   type: "object",
@@ -165,12 +231,31 @@ function go(arr, oSet = {}) {
     const f = o.frameStyle;
     let row;
 
-
+    const line = {
+      bVertical: "║",
+      bHorizontal: "═",
+      bLeftTop: "╔",
+      bLeftMiddle: "╠",
+      bLeftBottom: "╚",
+      bCenterTop: "╦",
+      bCross: "╬",
+      bCenterBottom: "╩",
+      bRightTop: "╗",
+      bRightMiddle: "╣",
+      bRightBottom: "╝",
+      bLeft_tMiddle: "╟",
+      tCross: "┼",
+      bRight_tMiddle: "╢",
+      tMiddle_bTop: "╤",
+      tMiddle_bBottom: "╧",
+      tVertical: "│",
+      tHorizontal: "─",
+    };
 
     //: ╔ ║ ╠
-    let leftTop = f[2],
-      leftMiddle = f[1],
-      leftBottom = f[5];
+    let leftTop = line.bLeftTop,
+      leftMiddle = line.bVertical,
+      leftBottom = line.bLeftMiddle;
     //: ═ ╦ ╬
     let bridgeTop = f[0],
       bridgeBottom = f[0],
@@ -232,9 +317,39 @@ function go(arr, oSet = {}) {
       });
 
       for (let i = 0; i < maxRow; i++) {
-        if (i === 0) s = s + leftTop; //: First row start
-        else if (i === maxRow - 1) s = s + leftBottom; //: Last row start
-        else s = s + leftMiddle;
+        // i: horizontal line in row
+        // k: number of row in table
+        let firstRow;
+        let lastRow;
+        let otherRow;
+
+        if (k === -1) {
+          //: HEADER
+          // rowStart = "3"
+          firstRow = line.bLeftTop;
+          lastRow = line.bLeftMiddle;
+          otherRow = line.bVertical;
+          // console.log(`rowStart k = ${k}`)
+        } else if (k === 0) {
+          //: FIRST ROW
+          firstRow = "";
+          lastRow = line.bLeft_tMiddle;
+          otherRow = line.bVertical;
+        } else if (k > 0 && k < arr.length - 1) {
+          firstRow = "";
+          lastRow = line.bLeft_tMiddle;
+          otherRow = line.bVertical;
+        } else if (k === arr.length - 1) {
+          firstRow = "";
+          lastRow = line.bLeftBottom;
+          otherRow = line.bVertical;
+        }
+
+        // s = s + rowStart
+
+        if (i === 0) s = s + firstRow; //: First row start
+        else if (i === maxRow - 1) s = s + lastRow; //: Last row start
+        else s = s + otherRow;
 
         o.limit.forEach((limit, index) => {
           //: First row

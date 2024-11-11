@@ -54,4 +54,4 @@ go(humans, {
 //     console.log(`a[${i}] = ${a[i]}`)
 //   } catch {new Error(`Error: ${a[i]}`)}
 
-// }
+// }`
