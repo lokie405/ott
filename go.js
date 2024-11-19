@@ -23,6 +23,7 @@ const humans = [
     skills: ["Communication", "Patience", "Organization"],
     pet: "hamster",
     country: "UK",
+    // TODO:  number support
     "years old": 2525252525,
   },
 ];

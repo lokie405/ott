@@ -2,12 +2,42 @@ const Ajv = require("ajv");
 const beautify = require("json-beautify");
 
 const frameStyles = {
-  real: ["║", "═", "│", "─", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╟", "╫", "╢"],
-
-  // double : ['╔', /*201*/ '╗', /*187*/ '╚', /*200*/ '╝', /*188*/ '═', /*205*/ '║', /*186*/ '╦', /*203*/ '╩', /*202*/ '╣', /*185*/ '╠', /*204*/ '╬', /*206*/ '╧', /*207*/ '╤', /*209*/ '╢', /*182*/ '╟', /*198*/ '╫', /*215*/ '╪', /*215*/ '─', /*196*/ '│', /*179*/],
-  double: ["═", "║", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╤", "╢", "╟", "╫", "╪", "─", "│"],
-
-  single: ["┌", /*218*/ "┐", /*191*/ "└", /*192*/ "┘", /*217*/ "─", /*196*/ "│", /*179*/ "┬", /*194*/ "┴", /*193*/ "┤", /*180*/ "├", /*195*/ "┼" /*197*/],
+  //   stylewe: [   "╠",  "╩", "╫", ],
+  //   double : ['╔', /*201*/ '╗', /*187*/ '╚', /*200*/ '╝', /*188*/ '═', /*205*/ '║', /*186*/ '╦', /*203*/ '╩', /*202*/ '╣', /*185*/ '╠', /*204*/ '╬', /*206*/ '╧', /*207*/ '╤', /*209*/ '╢', /*182*/ '╟', /*198*/ '╫', /*215*/ '╪', /*215*/ '─', /*196*/ '│', /*179*/],
+  //   double: ["═", "║", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╤", "╢", "╟", "╫", "╪", "─", "│"],
+  //   single: ["┌", /*218*/ "┐", /*191*/ "└", /*192*/ "┘", /*217*/ "─", /*196*/ "│", /*179*/ "┬", /*194*/ "┴", /*193*/ "┤", /*180*/ "├", /*195*/ "┼" /*197*/],
+};
+//  A __B__ C __B__ D
+//  E ****  F ****  E
+//  G __H__ I __H__ J
+//  K ++++  L ++++  K
+//  M __N__ O __N__ P
+//  K ++++  L ++++  K
+//  Q __R__ S __R__ T
+//            0    1    2    3    4    5    6    7    8    9    10   11   12   13   14   15   16   17   18   19
+//            a    b    c    d    e    f    g    h    i    j    k    l    m    n    o    p    q    r    s    t   uvwxyz
+let style = ["╔", "═", "╦", "╗", "║", "║", "╠", "═", "╩", "╣", "║", "│", "╟", "─", "┼", "╢", "╚", "═", "╧", "╝"];
+const frame = {
+  a: style[0],
+  b: style[1],
+  c: style[2],
+  d: style[3],
+  e: style[4],
+  f: style[5],
+  g: style[6],
+  h: style[7],
+  i: style[8],
+  j: style[9],
+  k: style[10],
+  l: style[11],
+  m: style[12],
+  n: style[13],
+  o: style[14],
+  p: style[15],
+  q: style[16],
+  r: style[17],
+  s: style[18],
+  t: style[19],
 };
 
 // ╔════╦═════╦════════╦════╗
@@ -52,7 +82,7 @@ const frameStyles = {
 // ╪ (U+256A) – Box Drawings Vertical Double and Horizontal Single
 // ┲ (U+2532) – Box Drawings Down Double and Horizontal Single
 // ╨ (U+2568) – Box Drawings Vertical Double and Horizontal
-// real: [ "║", "═", "│", "─", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╟", "╫", "╢",],
+// style: [ "║", "═", "│", "─", "╔", "╦", "╗", "╠", "╬", "╣", "╚", "╩", "╝", "╧", "╟", "╫", "╢",],
 // const frame = {
 //   frameVertical : "║",
 //   frameHorizontal : "═",
@@ -228,59 +258,62 @@ function go(arr, oSet = {}) {
   //::: FRAME
   function makeHeader(type) {
     let s = "";
-    const f = o.frameStyle;
+    // const f = o.frameStyle;
     let row;
+    // a___b__c___b__d
+    // e HEAD e HEAD e
+    // f___b__g___b__h
+    // e TEXT p TEXT e
+    // i___o__j___o__k
+    // e TEXT p TEXT e
+    // l___b__m___b__n
 
-    const line = {
-      bVertical: "║",
-      bHorizontal: "═",
-      bLeftTop: "╔",
-      bLeftMiddle: "╠",
-      bLeftBottom: "╚",
-      bCenterTop: "╦",
-      bCross: "╬",
-      bCenterBottom: "╩",
-      bRightTop: "╗",
-      bRightMiddle: "╣",
-      bRightBottom: "╝",
-      bLeft_tMiddle: "╟",
-      tCross: "┼",
-      bRight_tMiddle: "╢",
-      tMiddle_bTop: "╤",
-      tMiddle_bBottom: "╧",
-      tVertical: "│",
-      tHorizontal: "─",
-    };
-
-    //: ╔ ║ ╠
-    let leftTop = line.bLeftTop,
-      leftMiddle = line.bVertical,
-      leftBottom = line.bLeftMiddle;
-    //: ═ ╦ ╬
-    let bridgeTop = f[0],
-      bridgeBottom = f[0],
-      topCross = f[3],
-      middleCross = f[6];
-    //: ╗ ╣ ╝
-    let rightTop = f[4],
-      rightMiddle = f[7],
-      frameRightBottom = f[10];
+    // {
+    //   0: "bLeftTop",
+    //   1: "bHorizontal",
+    //   2: "bCenterTop",
+    //   3: "bRightTop",
+    //   4: "bVertical",
+    //   5: "bCross",
+    //   6: "bRightMiddle",
+    //   7: "tVertical",
+    //   8: "bLeft_tMiddle",
+    //   9: "tHorizontal",
+    //   10: "tCross",
+    //   11: "bRight_tMiddle",
+    //   12: "bLeftBottom",
+    //   13: "tMiddle_bBottom",
+    //   14: "bRightBottom"
+    // }
+    // //: ╔ ║ ╠
+    // let leftTop = style[0],
+    //   leftMiddle = style[4],
+    //   leftBottom = style[8];
+    // //: ═ ╦ ╬
+    // let bridgeTop = f[0],
+    //   bridgeBottom = f[0];
+    // // topCross = f[3],
+    // // middleCross = f[6];
+    // //: ╗ ╣ ╝
+    // let rightTop = f[4],
+    //   rightMiddle = f[7]
+    //   // frameRightBottom = f[10];
 
     for (let k = -1; k < arr.length; k++) {
       if (k > -1) {
         bridgeTop = "";
         topCross = "";
         if (k === arr.length - 1) {
-          middleCross = f[9];
+          // middleCross = f[9];
         }
 
         rightTop = "";
 
         leftTop = "";
-        leftBottom = k === arr.length - 1 ? f[8] : f[14];
+        // leftBottom = k === arr.length - 1 ? f[8] : f[14];
       }
       if (k === arr.length - 1) {
-        rightMiddle = frameRightBottom;
+        // rightMiddle = frameRightBottom;
       }
 
       if (k === -1) row = o.headers;
@@ -319,51 +352,103 @@ function go(arr, oSet = {}) {
       for (let i = 0; i < maxRow; i++) {
         // i: horizontal line in row
         // k: number of row in table
-        let firstRow;
-        let lastRow;
-        let otherRow;
+
+        // ╔
+        // ║
+        // ╠
+        let leftTop;
+        let leftMiddle;
+        let leftBottom;
+        // ═╦═
+        // Text
+        // ═╩═
+        let middleTop;
+        let middleMiddle;
+        let middleBottom;
+        // ╗
+        // ╣
+        // ╝
+
+        let rightTop;
+        let rightMiddle;
+
+        let columnLine;
+        let columnLast = frame.e;
+        let rowLine = "3";
+
 
         if (k === -1) {
           //: HEADER
-          // rowStart = "3"
-          firstRow = line.bLeftTop;
-          lastRow = line.bLeftMiddle;
-          otherRow = line.bVertical;
-          // console.log(`rowStart k = ${k}`)
+          leftTop = frame.a;
+          leftMiddle = frame.e;
+          leftBottom = frame.g;
+          columnLine = frame.e;
+          rowLine = frame.h
+
+          middleTop = frame.b;
+          middleMiddle = frame.c;
+          middleBottom = frame.i;
+
+          rightTop = frame.d;
+          rightMiddle = frame.h;
+          rightMiddle = frame.j;
         } else if (k === 0) {
           //: FIRST ROW
-          firstRow = "";
-          lastRow = line.bLeft_tMiddle;
-          otherRow = line.bVertical;
+          leftTop = "";
+          leftBottom = frame.m;
+          leftMiddle = frame.e;
+          columnLine = frame.l;
+          rowLine = frame.n
+
+          middleTop = "";
+          middleMiddle = "";
+          middleBottom = frame.o;
+          rightTop = "";
+          rightMiddle = frame.p;
         } else if (k > 0 && k < arr.length - 1) {
-          firstRow = "";
-          lastRow = line.bLeft_tMiddle;
-          otherRow = line.bVertical;
+          //: OTHER ROW
+          leftTop = "";
+          leftBottom = frame.m;
+          leftMiddle = frame.k;
+          columnLine = frame.l;
+          rowLine = frame.n
+
+          middleTop = "";
+          middleMiddle = "";
+          middleBottom = frame.o;
+
+          rightTop = "";
+          rightMiddle = frame.p;
         } else if (k === arr.length - 1) {
-          firstRow = "";
-          lastRow = line.bLeftBottom;
-          otherRow = line.bVertical;
+          //: LAST ROW
+          leftTop = "";
+          leftBottom = frame.q;
+          leftMiddle = frame.k;
+          columnLine = frame.l;
+          rowLine = frame.r
+
+          middleTop = "";
+          middleMiddle = "";
+          middleBottom = frame.s;
+
+          rightTop = "";
+          rightMiddle = frame.t;
         }
 
-        // s = s + rowStart
-
-        if (i === 0) s = s + firstRow; //: First row start
-        else if (i === maxRow - 1) s = s + lastRow; //: Last row start
-        else s = s + otherRow;
+        if (i === 0) s = s + leftTop; //: First row start
+        else if (i === maxRow - 1) s = s + leftBottom; //: Last row start
+        else s = s + leftMiddle;
 
         o.limit.forEach((limit, index) => {
-          //: First row
           if (i === 0) {
-            s = s + bridgeTop.repeat(limit);
-            if (index < o.limit.length - 1) s = s + topCross;
-            //: Last row
+            s = s + middleTop.repeat(limit);
+            if (index < o.limit.length - 1) s = s + middleMiddle;
           } else if (i === maxRow - 1) {
-            s = s + bridgeBottom.repeat(limit);
-            if (index < o.limit.length - 1) s = s + middleCross;
-            //: Text
+            s = s + rowLine.repeat(limit);
+            TODO: 
+            if (index < o.limit.length - 1) s = s + middleBottom;
           } else {
             const limit = o.limit[index];
-            // TODO: Make 5 index not undefined
             row[index] = row[index] === undefined ? o.unsetTemplate : row[index];
             const rowCount = row[index].length;
             let spacePre, spacePost;
@@ -378,7 +463,10 @@ function go(arr, oSet = {}) {
               spacePre = limit - row[index][0].length;
               spacePost = "";
             }
-            s = s + space(spacePre) + row[index][0] + space(spacePost) + f[1]; //_ <=text=
+            if (index === o.limit.length - 1) columnLine = columnLast;
+            // else if (index === 0) column = columnLeft
+            // else column = column\;
+            s = s + space(spacePre) + row[index][0] + space(spacePost) + columnLine; //_ <=text=
             if (rowCount === 1) {
               row[index][0] = " ";
             } else {
@@ -394,7 +482,6 @@ function go(arr, oSet = {}) {
         else end = `\n`;
         s = s + end;
       }
-      // console.log(`s = ${s}`);
     }
 
     return s;
@@ -413,14 +500,10 @@ function go(arr, oSet = {}) {
       if (row !== undefined || row != null) {
         if (Array.isArray(row)) {
           result = Math.max(result, ...row.map((item) => item.length));
-          // console.log(`arr: ${row.length}`)
         } else if (typeof row === "string") {
-          // console.log(`name: ${el} ; str: ${row}`)
           result = Math.max(result, row.length);
         }
         const x = oDef.limit[oDef.headers.indexOf(el)];
-        // console.log(`r: ${result} limit: ${x} ; res: ${Math.ceil(result / x)}`)
-
         result = Math.ceil(result / oDef.limit[oDef.headers.indexOf(el)]);
         r.push(result);
       }
@@ -435,3 +518,11 @@ function go(arr, oSet = {}) {
 }
 
 module.exports = go;
+
+// a___b__c___b__d
+// e HEAD e HEAD e
+// f___b__g___b__h
+// e TEXT p TEXT e
+// i___o__j___o__k
+// e TEXT p TEXT e
+// l___b__m___b__n
